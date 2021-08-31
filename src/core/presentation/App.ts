@@ -1,51 +1,51 @@
-import express from 'express'
-import cors from 'cors'
-import Database from '../data/connections/Database'
-
-import UserRoutes from '../../features/users/routers/UserRoutes'
-import ScrapRoutes from '../../features/scraps/routers/ScrapRoutes'
-
+import express, { Router, Request, Response } from 'express';
+import cors from 'cors';
+import UserRoutes from '../../features/users/presentation/routes/routes';
+import ScrapRoutes from '../../features/scraps/presentation/routes/routes';
 
 export default class App {
-    readonly #express: express.Application
+    readonly #express: express.Application;
 
     constructor() {
-        this.#express = express()
+        this.#express = express();
     }
 
-    public async init(){
-        this.config()
-        this.middlewares()
-        this.routes()
-        await this.database
+    public get server(): express.Application {
+        return this.#express;
     }
 
-    private async database() {
-        await new Database().openConnection()
+    public init() {
+        this.config();
+        this.middlewares();
+        this.routes();
     }
 
     private config() {
-        this.#express.use(express.json())
-        this.#express.use(express.urlencoded({ extended: false }))
-        this.#express.use(cors())
+        this.#express.use(express.urlencoded({extended: false}));
+        this.#express.use(express.json());
+        this.#express.use(cors());
     }
 
     private middlewares() {
-
+        // TODO
     }
 
-    private routes(){
-        const scrapRoutes = new ScrapRoutes().init()
-        const userRoutes = new UserRoutes().init()
+    private routes() {
+        const router = Router();
 
-        this.#express.use(scrapRoutes)
-        this.#express.use(userRoutes)
+        this.#express.get('/', (_: Request, response: Response) => response.redirect('/api'));
+        this.#express.use('/api', router);
+
+        router.get('/', (_: Request, response: Response) => response.send('API rodando...'));
+
+        new UserRoutes().init(router); //Users
+        new ScrapRoutes().init(router); //Scraps
     }
 
-    public start(port: any) {
+    /* istanbul ignore next */
+    public start(port: number) {
         this.#express.listen(port, () => {
-            console.log(`Server is running... ${port}`)
-        })
+            console.log('API rodando...');
+        });
     }
 }
-
